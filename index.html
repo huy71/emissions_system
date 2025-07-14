@@ -1,0 +1,1819 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Hệ thống phân tích khí thải</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --dark-bg: #1a1d29;
+            --card-bg: #ffffff;
+            --text-primary: #2d3748;
+            --text-secondary: #718096;
+            --border-color: #e2e8f0;
+            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --shadow-medium: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --shadow-heavy: 0 20px 40px rgba(0, 0, 0, 0.15);
+            --border-radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --body-bg: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        [data-theme="dark"] {
+            --card-bg: #2d3748;
+            --text-primary: #f7fafc;
+            --text-secondary: #a0aec0;
+            --border-color: #4a5568;
+            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --shadow-medium: 0 10px 25px rgba(0, 0, 0, 0.4);
+            --shadow-heavy: 0 20px 40px rgba(0, 0, 0, 0.5);
+            --body-bg: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--body-bg);
+            min-height: 100vh;
+            line-height: 1.6;
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: var(--shadow-medium);
+            transition: var(--transition);
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            background: var(--primary-gradient);
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="25" r="1" fill="white" opacity="0.05"/><circle cx="25" cy="75" r="1" fill="white" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .sidebar-header p {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .menu {
+            list-style: none;
+            padding: 1rem 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu li {
+            margin: 0.25rem 1rem;
+        }
+
+        .menu-btn {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .menu-btn i {
+            margin-right: 1rem;
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .menu-btn:hover {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            transform: translateX(4px);
+            box-shadow: var(--shadow-light);
+        }
+
+        .menu-btn.active {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .menu-btn.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: white;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .delete-btn {
+            background: var(--danger-gradient) !important;
+            color: white !important;
+            margin-top: auto;
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            position: relative !important;
+            z-index: 10 !important;
+            border: 2px solid #e53e3e !important;
+        }
+
+        .delete-btn:hover {
+            transform: translateX(4px) scale(1.02);
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%) !important;
+        }
+
+        .delete-btn:disabled {
+            opacity: 0.6 !important;
+            cursor: not-allowed !important;
+        }
+
+        .main {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-light);
+        }
+
+        .topbar h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            flex: 1;
+            text-align: center;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--success-gradient);
+            color: white;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-indicator i {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .container {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .widget {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            margin-bottom: 2rem;
+            padding: 2rem;
+            transition: var(--transition);
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .widget::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            transform: scaleX(0);
+            transition: var(--transition);
+            transform-origin: left;
+        }
+
+        .widget:hover {
+            box-shadow: var(--shadow-medium);
+            transform: translateY(-2px);
+        }
+
+        .widget:hover::before {
+            transform: scaleX(1);
+        }
+
+        .widget h2 {
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .widget h2 i {
+            color: #667eea;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--success-gradient);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .stat-card h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-change {
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-change.positive {
+            color: #48bb78;
+        }
+
+        .stat-change.negative {
+            color: #f56565;
+        }
+
+        .table-container {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-color);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        [data-theme="dark"] th {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        tr:hover {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: var(--shadow-light);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .btn-success {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-gradient);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            background: var(--card-bg);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 2rem 0;
+        }
+
+        .pagination .btn {
+            min-width: 3rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .pagination .page-info {
+            margin: 0 1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: end;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--border-color);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2rem 0;
+        }
+
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #fefcbf 0%, #faf089 100%);
+            color: #744210;
+            border: 1px solid #faf089;
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+            color: #742a2a;
+            border: 1px solid #feb2b2;
+        }
+
+        .level-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .level-badge.pass {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .level-badge.level1 {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+        }
+
+        .level-badge.level2 {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+        }
+
+        .level-badge.level3 {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            color: white;
+        }
+
+        .level-badge.level4 {
+            background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+            color: white;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid var(--border-color);
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 80px;
+            }
+            
+            .sidebar-header h2,
+            .sidebar-header p {
+                display: none;
+            }
+            
+            .menu-btn span {
+                display: none;
+            }
+            
+            .main {
+                margin-left: 80px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                width: 280px;
+                z-index: 1001;
+            }
+            
+            .sidebar.open {
+                left: 0;
+            }
+            
+            .main {
+                margin-left: 0;
+            }
+            
+            .topbar {
+                padding: 1rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .widget {
+                padding: 1rem;
+            }
+            
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            #qc-legend div:last-child {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .topbar h1 {
+                font-size: 1.25rem;
+            }
+            
+            .topbar-right {
+                gap: 0.25rem;
+            }
+            
+            .status-indicator {
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+            }
+            
+            .theme-toggle {
+                font-size: 1rem;
+                padding: 0.25rem;
+            }
+            
+            .widget h2 {
+                font-size: 1.25rem;
+            }
+            
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+            
+            th, td {
+                padding: 0.5rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            min-width: 40px;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            min-width: 40px;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .topbar h1 {
+                font-size: 1.5rem;
+            }
+            
+            .topbar-right {
+                gap: 0.5rem;
+            }
+            
+            .status-indicator span {
+                display: none;
+            }
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+            .overlay.show {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="overlay"></div>
+    <div class="layout">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-wind"></i> EcoMonitor</h2>
+                <p>Hệ thống giám sát khí thải thông minh</p>
+            </div>
+            <ul class="menu">
+                <li><button class="menu-btn active" data-section="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Trang chủ</span>
+                </button></li>
+                <li><button class="menu-btn" data-section="upload">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Upload dữ liệu</span>
+                </button></li>
+                <li><button class="menu-btn" data-section="summary">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Thống kê vượt chuẩn</span>
+                </button></li>
+                <li><button class="menu-btn" data-section="stats">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Thống kê Min/Max/Avg</span>
+                </button></li>
+                <li><button class="menu-btn" data-section="data">
+                    <i class="fas fa-table"></i>
+                    <span>Bảng dữ liệu</span>
+                </button></li>
+                <li><button class="menu-btn" data-section="chart">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Biểu đồ</span>
+                </button></li>
+                <li><button class="menu-btn delete-btn" id="delete-btn" onclick="console.log('Delete button clicked via onclick')">
+                    <i class="fas fa-trash-alt"></i>
+                    <span>Xóa dữ liệu</span>
+                </button></li>
+            </ul>
+        </nav>
+        
+        <div class="main">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" id="mobile-menu-btn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+                <h1>Hệ thống Giám sát Khí thải Thông minh</h1>
+                <div class="topbar-right">
+                    <button class="theme-toggle" id="theme-toggle">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="status-indicator">
+                        <i class="fas fa-circle"></i>
+                        <span>Hoạt động</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="container">
+                <div id="dashboard-section" class="widget fade-in section">
+                    <h2><i class="fas fa-home"></i> Chào mừng bạn đến với EcoMonitor!</h2>
+                    <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 2rem;">
+                        Hệ thống giám sát khí thải thông minh giúp bạn theo dõi và phân tích dữ liệu môi trường một cách hiệu quả.
+                    </p>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Tổng số bản ghi</h3>
+                            <div class="stat-value" id="total-records">0</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>Đã cập nhật</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Trạng thái hệ thống</h3>
+                            <div class="stat-value" style="font-size: 1.5rem; color: #48bb78;">Hoạt động</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Ổn định</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Lần cập nhật cuối</h3>
+                            <div class="stat-value" style="font-size: 1.2rem;" id="last-update">Chưa có dữ liệu</div>
+                            <div class="stat-change">
+                                <i class="fas fa-clock"></i>
+                                <span>Tự động</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-success">
+                        <i class="fas fa-info-circle"></i>
+                        <div>
+                            <strong>Hướng dẫn:</strong> Chọn chức năng từ menu bên trái để bắt đầu sử dụng hệ thống.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="upload-section" class="widget fade-in section" style="display:none;">
+                    <h2><i class="fas fa-cloud-upload-alt"></i> Tải lên dữ liệu Excel</h2>
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-icon">
+                            <i class="fas fa-file-excel"></i>
+                        </div>
+                        <h3>Kéo thả file Excel vào đây hoặc click để chọn</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                            Hỗ trợ định dạng .xlsx, .xls
+                        </p>
+                        <form id="upload-form">
+                            <input type="file" id="file-input" accept=".xlsx,.xls" style="display: none;" />
+                            <button type="button" class="btn btn-primary" id="file-select-btn">
+                                <i class="fas fa-folder-open"></i>
+                                <span>Chọn file</span>
+                            </button>
+                        </form>
+                    </div>
+                    <div id="file-info" style="display: none; margin: 1.5rem 0;">
+                        <div class="alert alert-success">
+                            <i class="fas fa-file-check"></i>
+                            <div>
+                                <strong>File đã chọn:</strong> <span id="file-name"></span>
+                            </div>
+                        </div>
+                        <button type="button" id="upload-btn" class="btn btn-success">
+                            <i class="fas fa-upload"></i>
+                            <span>Tải lên</span>
+                        </button>
+                    </div>
+                    <div id="upload-status"></div>
+                </div>
+
+                <div id="summary-section" class="widget fade-in section" style="display:none;">
+                    <h2><i class="fas fa-chart-pie"></i> Thống kê vượt chuẩn</h2>
+                    <div id="qc-legend" class="alert alert-warning" style="margin-bottom: 2rem;">
+                        <i class="fas fa-info-circle"></i>
+                        <div>
+                            <h4 style="margin-bottom: 0.5rem;">Chú thích các cấp độ QC:</h4>
+                            <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; align-items: center;">
+                                <span><span class="level-badge pass">Đạt QC</span> < QCVN</span>
+                                <span><span class="level-badge level1">Cấp 1</span> 1.1-2x QCVN</span>
+                                <span><span class="level-badge level2">Cấp 2</span> 2-5x QCVN</span>
+                                <span><span class="level-badge level3">Cấp 3</span> 5-10x QCVN</span>
+                                <span><span class="level-badge level4">Cấp 4</span> ≥10x QCVN</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <div id="summary"></div>
+                    </div>
+                </div>
+
+                <div id="stats-section" class="widget fade-in section" style="display:none;">
+                    <h2><i class="fas fa-chart-bar"></i> Thống kê tổng quan</h2>
+                    <div class="table-container">
+                        <div id="stats"></div>
+                    </div>
+                </div>
+
+                <div id="data-section" class="widget fade-in section" style="display:none;">
+                    <h2><i class="fas fa-table"></i> Bảng dữ liệu chi tiết</h2>
+                    <div class="filter-bar">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Thời gian từ:</label>
+                            <input type="date" id="filter-from" class="form-control">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Đến:</label>
+                            <input type="date" id="filter-to" class="form-control">
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-self: end;">
+                            <button id="filter-apply" class="btn btn-primary">
+                                <i class="fas fa-filter"></i>
+                                <span>Lọc</span>
+                            </button>
+                            <button id="filter-reset" class="btn btn-secondary">
+                                <i class="fas fa-undo"></i>
+                                <span>Đặt lại</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="pagination">
+                        <button id="prev" class="btn btn-secondary">
+                            <i class="fas fa-chevron-left"></i>
+                            <span>Trước</span>
+                        </button>
+                        <span class="page-info" id="page-info"></span>
+                        <button id="next" class="btn btn-secondary">
+                            <span>Sau</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="data-table"></table>
+                    </div>
+                </div>
+
+                <div id="chart-section" class="widget fade-in section" style="display:none;">
+                    <h2><i class="fas fa-chart-line"></i> Biểu đồ trực quan</h2>
+                    <div class="filter-bar">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Loại biểu đồ:</label>
+                            <select id="chart-type" class="form-control">
+                                <option value="line">Biểu đồ đường (Line)</option>
+                                <option value="bar">Biểu đồ cột (Bar)</option>
+                                <option value="area">Biểu đồ vùng vượt chuẩn</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Chỉ số:</label>
+                            <select id="chart-metric" class="form-control"></select>
+                        </div>
+                        <button id="draw-chart" class="btn btn-primary" style="align-self: end;">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Vẽ biểu đồ</span>
+                        </button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="main-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Global variables
+        let page = 1;
+        const pageSize = 20;
+        let totalPages = 1;
+        let dataDeleted = false;
+        let chartInstance = null;
+        let chartLabels = [];
+        let chartData = [];
+        let chartStats = {};
+        
+        // DOM elements
+        const menuBtns = document.querySelectorAll('.menu-btn');
+        const sections = document.querySelectorAll('.section');
+        const fileInput = document.getElementById('file-input');
+        const uploadArea = document.getElementById('upload-area');
+        const uploadForm = document.getElementById('upload-form');
+        const uploadBtn = document.getElementById('upload-btn');
+        const uploadStatus = document.getElementById('upload-status');
+        const fileInfo = document.getElementById('file-info');
+        const fileName = document.getElementById('file-name');
+        const filterFrom = document.getElementById('filter-from');
+        const filterTo = document.getElementById('filter-to');
+        const filterApply = document.getElementById('filter-apply');
+        const filterReset = document.getElementById('filter-reset');
+        const chartTypeSelect = document.getElementById('chart-type');
+        const chartMetricSelect = document.getElementById('chart-metric');
+        const drawChartBtn = document.getElementById('draw-chart');
+        const chartCanvas = document.getElementById('main-chart');
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const themeToggle = document.getElementById('theme-toggle');
+        const fileSelectBtn = document.getElementById('file-select-btn');
+
+        // File select button
+        fileSelectBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Theme functionality
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+        
+        function updateTheme() {
+            if (isDarkMode) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+        }
+
+        // Initialize theme
+        updateTheme();
+
+        themeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('darkMode', isDarkMode);
+            updateTheme();
+        });
+
+        // Filter state
+        let filterState = {
+            from: '',
+            to: ''
+        };
+
+        // Mobile menu functionality
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('show');
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+        });
+
+        // Menu navigation
+        function showSection(section) {
+            sections.forEach(s => s.style.display = 'none');
+            document.getElementById(section + '-section').style.display = 'block';
+            
+            menuBtns.forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.querySelector(`[data-section="${section}"]`);
+            if (activeBtn) activeBtn.classList.add('active');
+            
+            // Close mobile menu
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+        }
+
+        menuBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.dataset.section) {
+                    showSection(btn.dataset.section);
+                    
+                    // Reset upload form khi chuyển sang tab upload
+                    if (btn.dataset.section === 'upload') {
+                        resetUploadForm();
+                    }
+                    
+                    if (dataDeleted && ['summary','stats','data','chart'].includes(btn.dataset.section)) {
+                        handleNoDataState(btn.dataset.section);
+                        return;
+                    }
+                    
+                    switch(btn.dataset.section) {
+                        case 'summary':
+                            loadSummary();
+                            break;
+                        case 'stats':
+                            loadStats();
+                            break;
+                        case 'data':
+                            loadData();
+                            break;
+                        case 'chart':
+                            updateMetricOptions();
+                            break;
+                    }
+                }
+            });
+        });
+
+        function handleNoDataState(section) {
+            const noDataMessage = `
+                <div style="padding: 3rem; text-align: center; color: var(--text-secondary);">
+                    <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 1rem; color: var(--border-color);"></i>
+                    <h3>Chưa có dữ liệu</h3>
+                    <p>Vui lòng upload file mới để xem thông tin.</p>
+                    <button class="btn btn-primary" onclick="showSection('upload')" style="margin-top: 1rem;">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Đi đến Upload</span>
+                    </button>
+                </div>
+            `;
+            
+            switch(section) {
+                case 'summary':
+                    document.getElementById('summary').innerHTML = noDataMessage;
+                    break;
+                case 'stats':
+                    document.getElementById('stats').innerHTML = noDataMessage;
+                    break;
+                case 'data':
+                    document.getElementById('data-table').innerHTML = `<tr><td colspan="100%">${noDataMessage}</td></tr>`;
+                    document.getElementById('page-info').textContent = 'Không có dữ liệu';
+                    break;
+                case 'chart':
+                    if (chartInstance) {
+                        chartInstance.destroy();
+                        chartInstance = null;
+                    }
+                    const chartContainer = document.querySelector('.chart-container');
+                    if (chartContainer) {
+                        chartContainer.innerHTML = noDataMessage;
+                    }
+                    break;
+            }
+        }
+
+        // Check data availability
+        function checkDataAvailable() {
+            fetch('/api/data?page=1&page_size=1')
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+                    return res.json();
+                })
+                .then(res => {
+                    if (res.total && res.total > 0) {
+                        dataDeleted = false; // Reset trạng thái nếu có dữ liệu
+                        updateDashboardStats(res.total);
+                        showSection('dashboard');
+                    } else {
+                        dataDeleted = true; // Set trạng thái nếu không có dữ liệu
+                        showSection('upload');
+                    }
+                })
+                .catch(() => {
+                    dataDeleted = true; // Set trạng thái nếu có lỗi
+                    showSection('upload');
+                });
+        }
+
+        function updateDashboardStats(totalRecords) {
+            document.getElementById('total-records').textContent = totalRecords.toLocaleString();
+            document.getElementById('last-update').textContent = new Date().toLocaleString('vi-VN');
+        }
+
+        // Reset upload form
+        function resetUploadForm() {
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            uploadStatus.innerHTML = '';
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-upload"></i><span>Tải lên</span>';
+        }
+
+        // Upload functionality
+        uploadArea.addEventListener('click', (e) => {
+            // Chỉ mở file dialog khi click vào phần text, không phải nút
+            if (e.target === uploadArea || 
+                e.target.classList.contains('upload-icon') || 
+                e.target.tagName === 'H3' || 
+                (e.target.tagName === 'P' && !e.target.closest('.btn'))) {
+                fileInput.click();
+            }
+        });
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                
+                // Kiểm tra định dạng file
+                const validExtensions = ['.xlsx', '.xls'];
+                const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+                
+                if (!validExtensions.includes(fileExtension)) {
+                    uploadStatus.innerHTML = '<div class="alert alert-error"><i class="fas fa-exclamation-circle"></i><div><strong>Lỗi:</strong> Chỉ hỗ trợ file Excel (.xlsx, .xls)</div></div>';
+                    return;
+                }
+                
+                // Tạo FileList giả để gán cho input
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                fileInput.files = dt.files;
+                
+                handleFileSelection();
+            }
+        });
+
+        fileInput.addEventListener('change', handleFileSelection);
+
+        function handleFileSelection() {
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                
+                // Kiểm tra định dạng file
+                const validExtensions = ['.xlsx', '.xls'];
+                const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+                
+                if (!validExtensions.includes(fileExtension)) {
+                    uploadStatus.innerHTML = '<div class="alert alert-error"><i class="fas fa-exclamation-circle"></i><div><strong>Lỗi:</strong> Chỉ hỗ trợ file Excel (.xlsx, .xls)</div></div>';
+                    fileInput.value = '';
+                    fileInfo.style.display = 'none';
+                    return;
+                }
+                
+                // Kiểm tra kích thước file (tối đa 50MB)
+                const maxSize = 50 * 1024 * 1024; // 50MB
+                if (file.size > maxSize) {
+                    uploadStatus.innerHTML = '<div class="alert alert-error"><i class="fas fa-exclamation-circle"></i><div><strong>Lỗi:</strong> File quá lớn (tối đa 50MB)</div></div>';
+                    fileInput.value = '';
+                    fileInfo.style.display = 'none';
+                    return;
+                }
+                
+                // Reset upload status
+                uploadStatus.innerHTML = '';
+                fileName.textContent = file.name;
+                fileInfo.style.display = 'block';
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fas fa-upload"></i><span>Tải lên</span>';
+            } else {
+                fileInfo.style.display = 'none';
+                uploadBtn.disabled = true;
+                uploadStatus.innerHTML = '';
+            }
+        }
+
+        uploadBtn.addEventListener('click', function() {
+            if (fileInput.files.length === 0) return;
+            
+            // Reset trạng thái trước khi upload
+            uploadBtn.disabled = true;
+            uploadStatus.innerHTML = '';
+            uploadBtn.innerHTML = '<div class="loading"><div class="spinner"></div><span>Đang tải lên...</span></div>';
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then(res => {
+                if (res.success) {
+                    uploadStatus.innerHTML = '<div class="alert alert-success"><i class="fas fa-check-circle"></i><div><strong>Thành công!</strong> Đang tải lại trang...</div></div>';
+                    dataDeleted = false;
+                    // Reset form
+                    fileInput.value = '';
+                    fileInfo.style.display = 'none';
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    throw new Error(res.error || 'Tải lên thất bại!');
+                }
+            })
+            .catch(error => {
+                console.error('Upload error:', error);
+                uploadStatus.innerHTML = `<div class="alert alert-error"><i class="fas fa-exclamation-circle"></i><div><strong>Lỗi:</strong> ${error.message || 'Không thể kết nối đến server!'}</div></div>`;
+                
+                // Reset button state
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fas fa-upload"></i><span>Tải lên</span>';
+            });
+        });
+
+        // Data loading functions
+        function loadSummary() {
+            fetch('/api/summary')
+                .then(res => res.json())
+                .then(res => {
+                    const summary = res.summary;
+                    let html = '<table><thead><tr><th>Chỉ số</th><th>QCVN</th>';
+                    html += '<th>Đạt QC</th><th>%</th>';
+                    html += '<th>Cấp 1</th><th>%</th>';
+                    html += '<th>Cấp 2</th><th>%</th>';
+                    html += '<th>Cấp 3</th><th>%</th>';
+                    html += '<th>Cấp 4</th><th>%</th>';
+                    html += '<th>Min</th><th>Max</th><th>TB</th></tr></thead><tbody>';
+                    
+                    for (const col in summary) {
+                        const s = summary[col];
+                        html += `<tr><td><strong>${col}</strong></td><td>${s.qc}</td>`;
+                        html += `<td>${s.levels['Đạt QC'].count}</td><td><span class="level-badge pass">${s.levels['Đạt QC'].percent}%</span></td>`;
+                        html += `<td>${s.levels['Cấp 1'].count}</td><td><span class="level-badge level1">${s.levels['Cấp 1'].percent}%</span></td>`;
+                        html += `<td>${s.levels['Cấp 2'].count}</td><td><span class="level-badge level2">${s.levels['Cấp 2'].percent}%</span></td>`;
+                        html += `<td>${s.levels['Cấp 3'].count}</td><td><span class="level-badge level3">${s.levels['Cấp 3'].percent}%</span></td>`;
+                        html += `<td>${s.levels['Cấp 4'].count}</td><td><span class="level-badge level4">${s.levels['Cấp 4'].percent}%</span></td>`;
+                        html += `<td>${s.min}</td><td>${s.max}</td><td>${s.avg.toFixed(2)}</td></tr>`;
+                    }
+                    html += '</tbody></table>';
+                    document.getElementById('summary').innerHTML = html;
+                })
+                .catch(() => {
+                    document.getElementById('summary').innerHTML = '<div class="alert alert-error"><i class="fas fa-exclamation-circle"></i><div>Không thể tải dữ liệu thống kê.</div></div>';
+                });
+        }
+
+        function loadStats() {
+            fetch('/api/stats')
+                .then(res => res.json())
+                .then(stats => {
+                    let html = '<table><thead><tr><th>Chỉ số</th><th>Giá trị nhỏ nhất</th><th>Giá trị lớn nhất</th><th>Giá trị trung bình</th></tr></thead><tbody>';
+                    for (const col in stats) {
+                        html += `<tr><td><strong>${col}</strong></td><td>${stats[col].min}</td><td>${stats[col].max}</td><td>${stats[col].avg.toFixed(2)}</td></tr>`;
+                    }
+                    html += '</tbody></table>';
+                    document.getElementById('stats').innerHTML = html;
+                })
+                .catch(() => {
+                    document.getElementById('stats').innerHTML = '<div class="alert alert-error"><i class="fas fa-exclamation-circle"></i><div>Không thể tải dữ liệu thống kê.</div></div>';
+                });
+        }
+
+        async function loadData() {
+            let url = `/api/data?page=${page}&page_size=${pageSize}`;
+            if (filterState.from) url += `&from_time=${filterState.from}`;
+            if (filterState.to) url += `&to_time=${filterState.to}`;
+            
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                totalPages = data.total_pages;
+                document.getElementById('page-info').textContent = `Trang ${data.page} / ${data.total_pages} (${data.total} bản ghi)`;
+                
+                const dataTable = document.getElementById('data-table');
+                if (data.data.length === 0) {
+                    dataTable.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 3rem; color: var(--text-secondary);">Không có dữ liệu</td></tr>';
+                    return;
+                }
+                
+                // Header
+                let header = '<thead><tr>';
+                Object.keys(data.data[0]).forEach(key => header += `<th>${key}</th>`);
+                header += '</tr></thead>';
+                
+                // Body
+                let body = '<tbody>';
+                data.data.forEach(row => {
+                    body += '<tr>';
+                    Object.values(row).forEach(val => body += `<td>${val}</td>`);
+                    body += '</tr>';
+                });
+                body += '</tbody>';
+                
+                dataTable.innerHTML = header + body;
+            } catch (error) {
+                document.getElementById('data-table').innerHTML = '<tr><td colspan="100%"><div class="alert alert-error"><i class="fas fa-exclamation-circle"></i><div>Không thể tải dữ liệu.</div></div></td></tr>';
+            }
+        }
+
+        // Filter functionality
+        filterApply.addEventListener('click', function() {
+            let from = filterFrom.value ? filterFrom.value + ' 00:00:00' : '';
+            let to = filterTo.value ? filterTo.value + ' 23:59:59' : '';
+            filterState = { from, to };
+            page = 1;
+            loadData();
+        });
+
+        filterReset.addEventListener('click', function() {
+            filterFrom.value = '';
+            filterTo.value = '';
+            filterState = { from: '', to: '' };
+            page = 1;
+            loadData();
+        });
+
+        // Pagination
+        document.getElementById('prev').addEventListener('click', function() {
+            if (page > 1) {
+                page--;
+                loadData();
+            }
+        });
+
+        document.getElementById('next').addEventListener('click', function() {
+            if (page < totalPages) {
+                page++;
+                loadData();
+            }
+        });
+
+        // Chart functionality
+        async function fetchChartData() {
+            const res = await fetch('/api/data?page=1&page_size=5000');
+            const data = await res.json();
+            return data.data;
+        }
+
+        async function fetchStats() {
+            const res = await fetch('/api/stats');
+            return await res.json();
+        }
+
+        async function updateMetricOptions() {
+            try {
+                const data = await fetchChartData();
+                if (!data.length) return;
+                
+                const keys = Object.keys(data[0]).filter(k => k !== 'Thời gian');
+                chartMetricSelect.innerHTML = '';
+                
+                const allOpt = document.createElement('option');
+                allOpt.value = 'all';
+                allOpt.textContent = 'Tất cả';
+                chartMetricSelect.appendChild(allOpt);
+                
+                keys.forEach(k => {
+                    const opt = document.createElement('option');
+                    opt.value = k;
+                    opt.textContent = k;
+                    chartMetricSelect.appendChild(opt);
+                });
+            } catch (error) {
+                console.error('Error updating metric options:', error);
+            }
+        }
+
+        async function drawChart() {
+            try {
+                const type = chartTypeSelect.value;
+                const metric = chartMetricSelect.value;
+                const data = await fetchChartData();
+                
+                if (!data.length) {
+                    chartCanvas.style.display = 'none';
+                    return;
+                }
+                
+                chartCanvas.style.display = 'block';
+                chartLabels = data.map(row => row['Thời gian']);
+                chartData = data.map(row => row[metric]);
+                chartStats = await fetchStats();
+                
+                if (chartInstance) chartInstance.destroy();
+                
+                if (type === 'line') {
+                    chartInstance = new Chart(chartCanvas, {
+                        type: 'line',
+                        data: {
+                            labels: chartLabels,
+                            datasets: [{
+                                label: metric,
+                                data: chartData,
+                                borderColor: '#667eea',
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                fill: false,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { 
+                                legend: { display: true },
+                                tooltip: {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                    titleColor: '#2d3748',
+                                    bodyColor: '#2d3748',
+                                    borderColor: '#e2e8f0',
+                                    borderWidth: 1
+                                }
+                            },
+                            scales: { 
+                                x: { display: false },
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                } else if (type === 'bar') {
+                    const stats = chartStats;
+                    let labels, min, max, avg, yType;
+                    
+                    if (metric === 'all') {
+                        labels = Object.keys(stats);
+                        min = labels.map(k => stats[k].min);
+                        max = labels.map(k => stats[k].max);
+                        avg = labels.map(k => stats[k].avg);
+                        yType = 'logarithmic';
+                    } else {
+                        labels = [metric];
+                        min = [stats[metric].min];
+                        max = [stats[metric].max];
+                        avg = [stats[metric].avg];
+                        yType = 'linear';
+                    }
+                    
+                    chartInstance = new Chart(chartCanvas, {
+                        type: 'bar',
+                        data: {
+                            labels,
+                            datasets: [
+                                { label: 'Min', data: min, backgroundColor: '#4facfe' },
+                                { label: 'Max', data: max, backgroundColor: '#f093fb' },
+                                { label: 'Avg', data: avg, backgroundColor: '#667eea' }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: true } },
+                            scales: { 
+                                x: { display: true }, 
+                                y: { type: yType, beginAtZero: true } 
+                            }
+                        }
+                    });
+                } else if (type === 'area') {
+                    const qcDict = {
+                        'CO((mg/Nm3))': 900,
+                        'SO2_1((mg/Nm3))': 450,
+                        'NOX_1((mg/Nm3))': 765,
+                        'O2_1(%)': 21,
+                        'Q_1(m3/h)': 9999999999,
+                        'Temp_1((oC))': 200,
+                        'Dust_1((mg/Nm3))': 180,
+                        'Pkq': null
+                    };
+                    const qc = qcDict[metric];
+                    
+                    chartInstance = new Chart(chartCanvas, {
+                        type: 'line',
+                        data: {
+                            labels: chartLabels,
+                            datasets: [
+                                {
+                                    label: metric,
+                                    data: chartData,
+                                    borderColor: '#667eea',
+                                    backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                                    fill: true,
+                                    tension: 0.4
+                                },
+                                qc ? {
+                                    label: 'QCVN',
+                                    data: Array(chartLabels.length).fill(qc),
+                                    borderColor: '#f56565',
+                                    borderDash: [10, 5],
+                                    pointRadius: 0,
+                                    fill: false,
+                                    type: 'line'
+                                } : null
+                            ].filter(Boolean)
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: true } },
+                            scales: { x: { display: false } }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error drawing chart:', error);
+            }
+        }
+
+        // Event listeners for chart
+        chartTypeSelect.addEventListener('change', drawChart);
+        chartMetricSelect.addEventListener('change', drawChart);
+        drawChartBtn.addEventListener('click', drawChart);
+
+        // Delete functionality
+        const deleteBtn = document.getElementById('delete-btn');
+        if (deleteBtn) {
+            console.log('Delete button found, adding event listener...');
+            deleteBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Delete button clicked!');
+                
+                if (confirm('Bạn có chắc chắn muốn xóa toàn bộ dữ liệu đã upload? Hành động này không thể hoàn tác.')) {
+                    const deleteBtn = this;
+                    const originalText = deleteBtn.innerHTML;
+                    
+                    // Disable button and show loading
+                    deleteBtn.disabled = true;
+                    deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xóa...';
+                    
+                    console.log('Sending delete request...');
+                    fetch('/api/delete', { 
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(res => {
+                        console.log('Delete response status:', res.status);
+                        if (!res.ok) {
+                            throw new Error(`HTTP error! status: ${res.status}`);
+                        }
+                        return res.json();
+                    })
+                    .then(res => {
+                        console.log('Delete response:', res);
+                        if (res.success) {
+                            dataDeleted = true;
+                            
+                            // Update dashboard stats
+                            const totalRecords = document.getElementById('total-records');
+                            const lastUpdate = document.getElementById('last-update');
+                            if (totalRecords) totalRecords.textContent = '0';
+                            if (lastUpdate) lastUpdate.textContent = 'Chưa có dữ liệu';
+                            
+                            // Clear all data displays
+                            const summary = document.getElementById('summary');
+                            const stats = document.getElementById('stats');
+                            const dataTable = document.getElementById('data-table');
+                            const pageInfo = document.getElementById('page-info');
+                            
+                            if (summary) summary.innerHTML = '';
+                            if (stats) stats.innerHTML = '';
+                            if (dataTable) dataTable.innerHTML = '';
+                            if (pageInfo) pageInfo.textContent = '';
+                            
+                            // Destroy chart if exists
+                            if (chartInstance) {
+                                chartInstance.destroy();
+                                chartInstance = null;
+                            }
+                            
+                            // Show success message and redirect to upload
+                            showSection('upload');
+                            if (uploadStatus) {
+                                uploadStatus.innerHTML = `<div class="alert alert-success"><i class="fas fa-check-circle"></i><div><strong>Thành công!</strong> ${res.message || 'Đã xóa toàn bộ dữ liệu.'} Bạn có thể upload file mới.</div></div>`;
+                            }
+                            
+                            // Reset upload form
+                            resetUploadForm();
+                            
+                        } else {
+                            throw new Error(res.error || 'Xóa dữ liệu thất bại');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Delete error:', error);
+                        alert(`Xóa dữ liệu thất bại: ${error.message || 'Không thể kết nối đến server!'}`);
+                    })
+                    .finally(() => {
+                        // Re-enable button
+                        deleteBtn.disabled = false;
+                        deleteBtn.innerHTML = originalText;
+                    });
+                }
+            });
+        } else {
+            console.error('Delete button not found!');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded');
+            
+            // Check if delete button exists
+            const deleteBtn = document.getElementById('delete-btn');
+            console.log('Delete button found:', deleteBtn);
+            if (deleteBtn) {
+                console.log('Delete button text:', deleteBtn.textContent);
+                console.log('Delete button classes:', deleteBtn.className);
+                console.log('Delete button style:', deleteBtn.style.cssText);
+            }
+            
+            // Reset dataDeleted flag khi trang được tải lại
+            dataDeleted = false;
+            
+            showSection('dashboard');
+            checkDataAvailable();
+        });
+        
+        // Fallback nếu DOMContentLoaded đã được trigger
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                dataDeleted = false;
+                showSection('dashboard');
+                checkDataAvailable();
+            });
+        } else {
+            dataDeleted = false;
+            showSection('dashboard');
+            checkDataAvailable();
+        }
+    </script>
+</body>
+</html>
