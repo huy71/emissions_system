@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <title>Hệ thống phân tích khí thải</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -42,14 +44,85 @@
             --shadow-heavy: 0 20px 40px rgba(0, 0, 0, 0.5);
             --body-bg: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
         }
+        
+        /* Đảm bảo text luôn có contrast tốt trên mobile */
+        @media (max-width: 768px) {
+            :root {
+                --text-primary: #1a202c;
+                --text-secondary: #4a5568;
+            }
+            
+            [data-theme="dark"] {
+                --text-primary: #f7fafc;
+                --text-secondary: #a0aec0;
+            }
+            
+            /* Đảm bảo các phần tử quan trọng luôn hiển thị */
+            .topbar h1,
+            .widget h2,
+            .menu-btn span,
+            .sidebar-header h2,
+            .sidebar-header p {
+                color: var(--text-primary) !important;
+                text-shadow: none !important;
+                -webkit-text-fill-color: var(--text-primary) !important;
+            }
+            
+            /* Đảm bảo background rõ ràng */
+            .sidebar,
+            .widget,
+            .card,
+            .stat-card {
+                background: var(--card-bg) !important;
+            }
+            
+            /* Đảm bảo các nút có contrast tốt */
+            .btn {
+                color: white !important;
+                font-weight: 500 !important;
+            }
+            
+            .btn-primary {
+                background: var(--primary-gradient) !important;
+            }
+            
+            .btn-secondary {
+                background: var(--secondary-gradient) !important;
+            }
+        }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
             background: var(--body-bg);
             min-height: 100vh;
             line-height: 1.6;
             color: var(--text-primary);
             transition: var(--transition);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            font-display: swap;
+        }
+        
+        /* Đảm bảo text hiển thị ngay cả khi font chưa load */
+        .font-loading {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif !important;
+        }
+        
+        /* Đảm bảo text luôn hiển thị */
+        * {
+            font-family: inherit;
+        }
+        
+        /* Fallback cho trường hợp font không load được */
+        @font-face {
+            font-family: 'Inter-Fallback';
+            src: local('Arial'), local('Helvetica'), local('sans-serif');
+            font-display: swap;
+        }
+        
+        .font-fallback {
+            font-family: 'Inter-Fallback', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif !important;
         }
 
         .layout {
@@ -681,11 +754,7 @@
             .sidebar-header p {
                 display: none;
             }
-            
-            .menu-btn span {
-                display: none;
-            }
-            
+            /* .menu-btn span { display: none; }  // Đã vô hiệu hóa để chữ luôn hiển thị */
             .main {
                 margin-left: 80px;
             }
@@ -697,6 +766,8 @@
                 left: -280px;
                 width: 280px;
                 z-index: 1001;
+                background: var(--card-bg);
+                box-shadow: var(--shadow-heavy);
             }
             
             .sidebar.open {
@@ -733,6 +804,54 @@
                 align-items: flex-start;
                 gap: 0.5rem;
             }
+            
+            /* Đảm bảo sidebar hiển thị đúng trên mobile */
+            .sidebar-header {
+                padding: 1.5rem 1rem;
+            }
+            
+            .sidebar-header h2 {
+                font-size: 1.3rem;
+                margin-bottom: 0.25rem;
+            }
+            
+            .sidebar-header p {
+                font-size: 0.85rem;
+            }
+            
+            .menu-btn {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .menu-btn i {
+                font-size: 1rem;
+                margin-right: 0.75rem;
+            }
+            
+            /* Đảm bảo text trong sidebar luôn hiển thị rõ ràng */
+            .sidebar-header h2,
+            .sidebar-header p,
+            .menu-btn span {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                color: var(--text-primary) !important;
+            }
+            
+            .sidebar.open .sidebar-header h2,
+            .sidebar.open .sidebar-header p,
+            .sidebar.open .menu-btn span {
+                color: var(--text-primary) !important;
+            }
+            
+            .menu-btn.active {
+                color: white !important;
+            }
+            
+            .menu-btn.active span {
+                color: white !important;
+            }
         }
 
         @media (max-width: 480px) {
@@ -767,6 +886,37 @@
                 padding: 0.5rem;
                 font-size: 0.8rem;
             }
+            
+            /* Đảm bảo text hiển thị rõ ràng trên mobile */
+            body {
+                font-size: 14px;
+                line-height: 1.5;
+            }
+            
+            .menu-btn {
+                font-size: 0.9rem;
+                padding: 0.75rem 1rem;
+            }
+            
+            .sidebar-header h2 {
+                font-size: 1.2rem;
+            }
+            
+            .sidebar-header p {
+                font-size: 0.8rem;
+            }
+            
+            /* Đảm bảo contrast tốt */
+            .text-primary, h1, h2, h3, h4, h5, h6 {
+                color: var(--text-primary) !important;
+                font-weight: 500;
+            }
+            
+            /* Đảm bảo các phần tử có background rõ ràng */
+            .widget, .card, .stat-card {
+                background: var(--card-bg) !important;
+                color: var(--text-primary) !important;
+            }
         }
 
         .mobile-menu-btn {
@@ -777,6 +927,21 @@
             color: var(--text-primary);
             cursor: pointer;
             min-width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .mobile-menu-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .mobile-menu-btn i {
+            color: var(--text-primary);
+            font-size: 1.2rem;
         }
 
         .topbar-left {
@@ -831,12 +996,309 @@
             bottom: 0;
             background: rgba(0, 0, 0, 0.5);
             z-index: 1000;
+            backdrop-filter: blur(2px);
         }
 
         @media (max-width: 768px) {
             .overlay.show {
                 display: block;
             }
+            
+            /* Đảm bảo overlay không che khuất sidebar */
+            .sidebar {
+                z-index: 1001;
+            }
+        }
+
+        /* Đảm bảo các phần tử quan trọng luôn hiển thị */
+        .topbar h1,
+        .widget h2,
+        .menu-btn span,
+        .sidebar-header h2,
+        .sidebar-header p {
+            color: var(--text-primary) !important;
+            text-shadow: none !important;
+            -webkit-text-fill-color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo background rõ ràng */
+        .sidebar,
+        .widget,
+        .card,
+        .stat-card {
+            background: var(--card-bg) !important;
+        }
+        
+        /* Đảm bảo các nút có contrast tốt */
+        .btn {
+            color: white !important;
+            font-weight: 500 !important;
+        }
+        
+        .btn-primary {
+            background: var(--primary-gradient) !important;
+        }
+        
+        .btn-secondary {
+            background: var(--secondary-gradient) !important;
+        }
+        
+        /* Đảm bảo text trong sidebar luôn hiển thị */
+        .sidebar * {
+            color: var(--text-primary) !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* Đảm bảo menu buttons luôn hiển thị text */
+        .menu-btn {
+            color: var(--text-primary) !important;
+        }
+        
+        .menu-btn.active {
+            color: white !important;
+        }
+        
+        /* Đảm bảo các phần tử có text luôn hiển thị */
+        h1, h2, h3, h4, h5, h6, p, span, div, label, button {
+            color: var(--text-primary) !important;
+            visibility: visible !important;
+        }
+        
+        /* Đảm bảo text không bị ẩn bởi các thuộc tính CSS khác */
+        .text-hidden {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo các phần tử quan trọng luôn hiển thị */
+        .topbar h1,
+        .widget h2,
+        .menu-btn span,
+        .sidebar-header h2,
+        .sidebar-header p,
+        .status-indicator span,
+        .btn span {
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            color: inherit !important;
+        }
+        
+        /* Đảm bảo icons hiển thị đúng */
+        .fas, .fa, .far, .fab {
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* Đảm bảo text hiển thị đúng trong dark mode */
+        [data-theme="dark"] * {
+            color: var(--text-primary) !important;
+        }
+        
+        [data-theme="dark"] .sidebar *,
+        [data-theme="dark"] .widget *,
+        [data-theme="dark"] .card *,
+        [data-theme="dark"] .stat-card * {
+            color: var(--text-primary) !important;
+        }
+        
+        [data-theme="dark"] .menu-btn {
+            color: var(--text-primary) !important;
+        }
+        
+        [data-theme="dark"] .menu-btn.active {
+            color: white !important;
+        }
+        
+        [data-theme="dark"] .menu-btn.active span {
+            color: white !important;
+        }
+        
+        /* Đảm bảo tất cả text hiển thị rõ ràng */
+        body, html {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo các phần tử có text luôn hiển thị */
+        .sidebar-header h2,
+        .sidebar-header p,
+        .menu-btn span,
+        .topbar h1,
+        .widget h2,
+        .status-indicator span,
+        .btn span,
+        .alert div,
+        .stat-card h3,
+        .stat-card .stat-value,
+        .stat-card .stat-change span {
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            color: inherit !important;
+            font-size: inherit !important;
+            font-weight: inherit !important;
+        }
+        
+        /* Đảm bảo text trong các phần tử động */
+        #summary, #stats, #data-table, #upload-status {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo text trong bảng hiển thị */
+        table, th, td {
+            color: var(--text-primary) !important;
+            visibility: visible !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các trường hợp đặc biệt */
+        .fade-in {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có animation */
+        .widget, .card, .stat-card {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có gradient */
+        .topbar h1 {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có shadow */
+        .menu-btn.active {
+            color: white !important;
+            text-shadow: none !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có transform */
+        .menu-btn:hover {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có transition */
+        * {
+            transition: color 0.3s ease !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong mọi trường hợp */
+        .force-text-visible {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            color: var(--text-primary) !important;
+            font-size: 14px !important;
+            line-height: 1.5 !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong sidebar khi mở */
+        .sidebar.open .sidebar-header h2,
+        .sidebar.open .sidebar-header p,
+        .sidebar.open .menu-btn span {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong main content */
+        .main * {
+            color: var(--text-primary) !important;
+            visibility: visible !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong container */
+        .container * {
+            color: var(--text-primary) !important;
+            visibility: visible !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong topbar */
+        .topbar * {
+            color: var(--text-primary) !important;
+            visibility: visible !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong mọi trường hợp cuối cùng */
+        html, body {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có class cụ thể */
+        .sidebar-header,
+        .menu,
+        .menu-btn,
+        .widget,
+        .container,
+        .topbar,
+        .main {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có id cụ thể */
+        #sidebar,
+        #dashboard-section,
+        #upload-section,
+        #summary-section,
+        #stats-section,
+        #data-section,
+        #chart-section {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có data attribute */
+        [data-section] {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có role */
+        [role] {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có aria-label */
+        [aria-label] {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có title */
+        [title] {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có alt */
+        [alt] {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có placeholder */
+        [placeholder] {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có value */
+        [value] {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có content */
+        [content] {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Đảm bảo text hiển thị trong các phần tử có text */
+        [text] {
+            color: var(--text-primary) !important;
         }
     </style>
 </head>
@@ -1069,6 +1531,22 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // Font loading check
+        if ('fonts' in document) {
+            document.fonts.ready.then(() => {
+                console.log('Fonts loaded successfully');
+                document.body.classList.remove('font-loading');
+            }).catch(() => {
+                console.log('Using fallback fonts');
+                document.body.classList.add('font-loading');
+            });
+        } else {
+            // Fallback for browsers that don't support Font Loading API
+            setTimeout(() => {
+                document.body.classList.remove('font-loading');
+            }, 1000);
+        }
+        
         // Global variables
         let page = 1;
         const pageSize = 20;
@@ -1140,6 +1618,18 @@
         mobileMenuBtn.addEventListener('click', () => {
             sidebar.classList.toggle('open');
             overlay.classList.toggle('show');
+            
+            // Đảm bảo text hiển thị khi sidebar mở
+            if (sidebar.classList.contains('open')) {
+                setTimeout(() => {
+                    const sidebarTexts = sidebar.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, div, label, button');
+                    sidebarTexts.forEach(el => {
+                        el.style.visibility = 'visible';
+                        el.style.opacity = '1';
+                        el.style.color = getComputedStyle(el).color || 'var(--text-primary)';
+                    });
+                }, 100);
+            }
         });
 
         overlay.addEventListener('click', () => {
@@ -1814,6 +2304,27 @@
             showSection('dashboard');
             checkDataAvailable();
         }
+
+        // Đảm bảo text hiển thị đúng khi trang load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Đảm bảo tất cả text elements hiển thị
+            const textElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, div, label, button');
+            textElements.forEach(el => {
+                el.style.visibility = 'visible';
+                el.style.opacity = '1';
+                el.style.color = getComputedStyle(el).color || 'var(--text-primary)';
+            });
+            
+            // Đảm bảo sidebar text hiển thị
+            const sidebarElements = document.querySelectorAll('.sidebar h1, .sidebar h2, .sidebar h3, .sidebar p, .sidebar span');
+            sidebarElements.forEach(el => {
+                el.style.visibility = 'visible';
+                el.style.opacity = '1';
+                el.style.display = 'block';
+            });
+            
+            console.log('Text visibility ensured');
+        });
     </script>
 </body>
 </html>
