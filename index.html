@@ -800,6 +800,7 @@
             }
             
             #qc-legend div:last-child {
+                display: flex;
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 0.5rem;
@@ -1299,6 +1300,13 @@
         /* Đảm bảo text hiển thị trong các phần tử có text */
         [text] {
             color: var(--text-primary) !important;
+        }
+
+        /* Đảm bảo badge và mô tả xuống dòng */
+        #qc-legend span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
     </style>
 </head>
